@@ -40,8 +40,16 @@ def main():
         elif opcion =="4":
             opcion4()
         elif opcion =="5":
-            print("algo aca")
-            #opcion5()
+            if lista_matrices.puntero is not None:
+                actual = lista_matrices.puntero
+                while True:
+                    print(f"Generando gráfica de la matriz: {actual.matriz.nombre}")
+                    actual.matriz.Graficar_matriz()
+                    actual = actual.siguiente
+                    if actual == lista_matrices.puntero:
+                        break
+            else:
+                print("No hay matrices cargadas para graficar.")
 
 def opcion1(ruta, lista_matrices):
     try:
@@ -81,13 +89,53 @@ class MatrizAcceso:
         setattr(self, f"dato_{fila}_{columna}", valor)
     
     def mostrar_matriz(self):
-        print("Bandera")
+        ##print("Bandera")
         for i in range(1, self.n + 1):
             fila = ""
             for j in range(1, self.m + 1):
                 valor = getattr(self, f"dato_{i}_{j}", None)
                 fila += f"{valor} " if valor is not None else "0 "
             print(fila)
+
+    def Graficar_matriz(self):
+        # Crear el archivo dot para Graphviz
+        nombre_archivo_dot = f"{self.nombre}.dot"
+        with open(nombre_archivo_dot, "w") as file:
+            file.write("digraph G {\n")
+            file.write("  rankdir=TB;\n")  # Dirección de arriba hacia abajo
+            file.write("  node [shape=ellipse];\n")
+
+            # Crear el nodo raíz
+            file.write(f'  "Matrices" [label="Matrices", shape=ellipse];\n')
+            file.write(f'  "{self.nombre}" [label="{self.nombre}", shape=ellipse];\n')
+            file.write(f'  "Matrices" -> "{self.nombre}";\n')
+
+            # Crear nodos para n y m (filas y columnas)
+            file.write(f'  "n" [label="n={self.n}", shape=circle, color=blue, style=filled];\n')
+            file.write(f'  "m" [label="m={self.m}", shape=circle, color=blue, style=filled];\n')
+            file.write(f'  "{self.nombre}" -> "n";\n')
+            file.write(f'  "{self.nombre}" -> "m";\n')
+
+            # Crear nodos y conexiones para la matriz
+            for j in range(1, self.m + 1):
+                file.write(f'  "col_{j}" [label="", shape=ellipse];\n')
+                file.write(f'  "{self.nombre}" -> "col_{j}";\n')
+                for i in range(1, self.n + 1):
+                    valor = getattr(self, f"dato_{i}_{j}", 0)
+                    file.write(f'  "celda_{i}_{j}" [label="{valor}", shape=ellipse];\n')
+                    if i == 1:
+                        file.write(f'  "col_{j}" -> "celda_{i}_{j}";\n')
+                    else:
+                        file.write(f'  "celda_{i-1}_{j}" -> "celda_{i}_{j}";\n')
+
+            file.write("}\n")
+
+        # Ejecutar el comando para generar la imagen usando Graphviz
+        try:
+            subprocess.run(["dot", "-Tpng", nombre_archivo_dot, "-o", f"{self.nombre}.png"])
+            print(f"Gráfica generada como {self.nombre}.png")
+        except Exception as e:
+            print(f"Error al generar la gráfica: {e}")
 
 class ListaCircular:
     def __init__(self):
@@ -130,23 +178,54 @@ class ListaCircular:
 
 class Nodo:
     def __init__(self, matriz):
-        self.matriz = matriz  # Objeto de tipo MatrizAcceso
+        self.matriz = matriz  
         self.siguiente = None
 
 def ProcesarArchivo(lista_matrices):
-    print("Procesando archivo...")
     actual = lista_matrices.puntero
     if not actual:
         print("No hay matrices para procesar.")
         return
+
     while True:
-        print(f"Procesando matriz: {actual.matriz.nombre}")
-        actual.matriz.mostrar_matriz()
+        matriz = actual.matriz
+        print("\n")
+        print(f"Procesando matriz: {matriz.nombre}")
+        matriz.mostrar_matriz()
+        patrones_acceso = {}
+        sumas_por_patron = {}
+
+        for i in range(1, matriz.n + 1):
+            patron_binario = ""
+            suma_fila = [0] * matriz.m  
+            
+            for j in range(1, matriz.m + 1):
+                valor = getattr(matriz, f"dato_{i}_{j}", 0)
+                patron_binario += "1" if valor > 0 else "0"  
+                suma_fila[j - 1] += valor  
+
+            if patron_binario not in patrones_acceso:
+                patrones_acceso[patron_binario] = []
+                sumas_por_patron[patron_binario] = [0] * matriz.m 
+            
+            patrones_acceso[patron_binario].append(i) 
+
+            for j in range(matriz.m):
+                sumas_por_patron[patron_binario][j] += suma_fila[j]
+
+        print(f"Patrones de acceso para la matriz '{matriz.nombre}':")
+        for patron, tuplas in patrones_acceso.items():
+            print(f"Patrón {patron}: Tuplas {tuplas}, Suma: {sumas_por_patron[patron]}")
+
+
+        
+        print(f"Matriz Nueva '{matriz.nombre}':")
+        for patron, suma in sumas_por_patron.items():
+            print(suma)
+
         actual = actual.siguiente
         if actual == lista_matrices.puntero:
             break
-
-
 
 
 if __name__ == "__main__":
