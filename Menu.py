@@ -1,6 +1,4 @@
 import xml.etree.ElementTree as ET
-
-import xml.etree.ElementTree as ET
 import subprocess
 
 def MostrarMenu():
@@ -34,7 +32,7 @@ def main():
             print("adios")
             break
         elif opcion == "2":
-            opcion2()
+            ProcesarArchivo(lista_matrices)
         elif opcion == "8":
             opcion8()
         elif opcion =="3":
@@ -83,6 +81,7 @@ class MatrizAcceso:
         setattr(self, f"dato_{fila}_{columna}", valor)
     
     def mostrar_matriz(self):
+        print("Bandera")
         for i in range(1, self.n + 1):
             fila = ""
             for j in range(1, self.m + 1):
@@ -134,16 +133,18 @@ class Nodo:
         self.matriz = matriz  # Objeto de tipo MatrizAcceso
         self.siguiente = None
 
-
-
-
-
-
-
-
-
-
-
+def ProcesarArchivo(lista_matrices):
+    print("Procesando archivo...")
+    actual = lista_matrices.puntero
+    if not actual:
+        print("No hay matrices para procesar.")
+        return
+    while True:
+        print(f"Procesando matriz: {actual.matriz.nombre}")
+        actual.matriz.mostrar_matriz()
+        actual = actual.siguiente
+        if actual == lista_matrices.puntero:
+            break
 
 
 
