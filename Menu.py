@@ -118,13 +118,13 @@ class MatrizAcceso:
 
             # Crear nodos y conexiones para la matriz
             for j in range(1, self.m + 1):
-                file.write(f'  "col_{j}" [label="", shape=ellipse];\n')
-                file.write(f'  "{self.nombre}" -> "col_{j}";\n')
+                #file.write(f'  "col_{j}" [label="", shape=ellipse];\n')
+                #file.write(f'  "{self.nombre}" -> "col_{j}";\n')
                 for i in range(1, self.n + 1):
                     valor = getattr(self, f"dato_{i}_{j}", 0)
                     file.write(f'  "celda_{i}_{j}" [label="{valor}", shape=ellipse];\n')
                     if i == 1:
-                        file.write(f'  "col_{j}" -> "celda_{i}_{j}";\n')
+                        file.write(f'  "{self.nombre}" -> "celda_{i}_{j}";\n')
                     else:
                         file.write(f'  "celda_{i-1}_{j}" -> "celda_{i}_{j}";\n')
 
