@@ -189,44 +189,62 @@ def ProcesarArchivo(lista_matrices):
 
     while True:
         matriz = actual.matriz
-        print("\n")
-        print(f"Procesando matriz: {matriz.nombre}")
+        print(f"\nProcesando matriz: {matriz.nombre}")
         matriz.mostrar_matriz()
-        patrones_acceso = {}
-        sumas_por_patron = {}
+
+        # MatrizAcceso para almacenar patrones de acceso (usamos dos columnas, una para el patrón y otra para la fila)
+        patrones_acceso = MatrizAcceso("PatronesAcceso", matriz.n, 2)
+
+        # Crear una matriz para las sumas por patrón (número de filas igual al número de patrones que encontremos)
+        sumas_por_patron = MatrizAcceso("SumasPorPatron", 0, matriz.m)  # Inicialmente 0 filas, m columnas
+
+        numero_patrones = 0  # Contador de patrones únicos
 
         for i in range(1, matriz.n + 1):
             patron_binario = ""
-            suma_fila = [0] * matriz.m  
-            
+            suma_fila = MatrizAcceso(f"SumaFila_{i}", 1, matriz.m)  # MatrizAcceso en lugar de lista para las sumas por fila
+
             for j in range(1, matriz.m + 1):
                 valor = getattr(matriz, f"dato_{i}_{j}", 0)
-                patron_binario += "1" if valor > 0 else "0"  
-                suma_fila[j - 1] += valor  
+                patron_binario += "1" if valor > 0 else "0"  # Crear el patrón binario basado en los valores de la fila
+                suma_fila.agregar_dato(1, j, valor)  # Guardar el valor en la "matriz" suma_fila
 
-            if patron_binario not in patrones_acceso:
-                patrones_acceso[patron_binario] = []
-                sumas_por_patron[patron_binario] = [0] * matriz.m 
-            
-            patrones_acceso[patron_binario].append(i) 
+            # Buscar si el patrón ya existe en patrones_acceso
+            patron_existe = False
+            for k in range(1, numero_patrones + 1):
+                if getattr(patrones_acceso, f"dato_{k}_1") == patron_binario:
+                    patron_existe = True
+                    # Actualizar la suma de ese patrón
+                    for j in range(1, matriz.m + 1):
+                        valor_actual = getattr(sumas_por_patron, f"dato_{k}_{j}", 0)
+                        nuevo_valor = valor_actual + getattr(suma_fila, f"dato_1_{j}", 0)
+                        sumas_por_patron.agregar_dato(k, j, nuevo_valor)
+                    break
 
-            for j in range(matriz.m):
-                sumas_por_patron[patron_binario][j] += suma_fila[j]
+            if not patron_existe:
+                # Si el patrón no existe, lo agregamos a patrones_acceso y sumas_por_patron
+                numero_patrones += 1
+                patrones_acceso.agregar_dato(numero_patrones, 1, patron_binario)
+                patrones_acceso.agregar_dato(numero_patrones, 2, i)  # Guardamos la fila asociada al patrón
 
+                # Expandimos sumas_por_patron agregando una nueva fila
+                sumas_por_patron.n = numero_patrones
+                for j in range(1, matriz.m + 1):
+                    sumas_por_patron.agregar_dato(numero_patrones, j, getattr(suma_fila, f"dato_1_{j}", 0))
+
+        # Mostrar los patrones y las sumas
         print(f"Patrones de acceso para la matriz '{matriz.nombre}':")
-        for patron, tuplas in patrones_acceso.items():
-            print(f"Patrón {patron}: Tuplas {tuplas}, Suma: {sumas_por_patron[patron]}")
-
-
-        
-        print(f"Matriz Nueva '{matriz.nombre}':")
-        for patron, suma in sumas_por_patron.items():
-            print(suma)
+        for k in range(1, numero_patrones + 1):
+            patron = getattr(patrones_acceso, f"dato_{k}_1")
+            fila_asociada = getattr(patrones_acceso, f"dato_{k}_2")
+            print(f"Patrón {patron}: Tupla {fila_asociada}, Suma:", end=" ")
+            for j in range(1, matriz.m + 1):
+                print(getattr(sumas_por_patron, f"dato_{k}_{j}", 0), end=" ")
+            print()
 
         actual = actual.siguiente
         if actual == lista_matrices.puntero:
             break
-
 
 if __name__ == "__main__":
     main()
